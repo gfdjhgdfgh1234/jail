@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1920">
+<title>AdminJail</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Cormorant+Garamond:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+
+/* شفاف تماماً — Macho يعرضه كـ overlay */
+html,body{
+  width:100%;height:100%;overflow:hidden;
+  background:transparent !important;
+  background-color:transparent !important;
+  font-family:'Inter',sans-serif;
+  color:#dde3f5;user-select:none;
+  -webkit-font-smoothing:antialiased;
+}
+#root{
+  height:100%;
+  background:transparent !important;
+  pointer-events:none;
+  position:relative;
+}
+
+/* ── PANEL — positioned absolute مثل zombie menu ── */
+.JPanel{
+  position:absolute;
+  left:3vw;top:5vh;
+  display:flex;flex-direction:column;
+  pointer-events:auto;
+  filter:drop-shadow(0 0.5vw 1.5vw rgba(0,0,0,0.85));
+  visibility:hidden;
+}
+.JPanel.show{visibility:visible}
+
+/* BANNER */
+.JBanner{
+  width:26vw;height:5.5vw;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 1vw;
+  background:linear-gradient(135deg,#0a0a0a 0%,#111 100%);
+  border:0.05vw solid rgba(255,255,255,0.18);
+  border-bottom:none;
+  border-radius:0.5vw 0.5vw 0 0;
+  position:relative;overflow:hidden;
+}
+.JBanner::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(255,60,60,0.06),transparent 60%);
+}
+.brand .title{
+  font-family:'Cormorant Garamond',serif;
+  font-size:1.3vw;font-weight:700;letter-spacing:0.08vw;color:#fff;
+  position:relative;
+}
+.brand .sub{
+  font-size:0.52vw;font-weight:400;letter-spacing:0.12vw;
+  color:#3a3a3a;text-transform:uppercase;position:relative;
+}
+.stats{position:relative;display:flex;flex-direction:column;align-items:flex-end;gap:0.2vw}
+.stats .olabel{font-size:0.5vw;color:#4a4a4a;letter-spacing:0.06vw}
+.stats .ocount{
+  font-family:'Cormorant Garamond',serif;
+  font-size:1.1vw;font-weight:700;color:#32c864;
+}
+.redline{
+  position:absolute;bottom:0;left:0;right:0;height:0.08vw;
+  background:linear-gradient(90deg,transparent,rgba(255,60,60,0.6),transparent);
+}
+
+/* BODY */
+.JBody{
+  display:flex;width:26vw;
+  background:#10131c;
+  border:0.05vw solid rgba(255,255,255,0.18);
+  border-top:none;border-bottom:none;
+  gap:1px;
+}
+
+/* PLAYERS */
+.ColPlayers{
+  width:10vw;flex-shrink:0;
+  background:#0a0a0a;
+  display:flex;flex-direction:column;
+  border-left:0.04vw solid rgba(255,255,255,0.06);
+}
+.ColTitle{
+  padding:0.5vw 0.6vw;
+  font-size:0.48vw;font-weight:700;letter-spacing:0.1vw;
+  color:#3a3a3a;text-transform:uppercase;
+  border-bottom:0.04vw solid rgba(255,255,255,0.05);
+  background:rgba(0,0,0,0.4);
+}
+.PListInner{
+  flex:1;overflow-y:auto;padding:0.2vw;
+  max-height:20vw;scrollbar-width:none;
+}
+.PListInner::-webkit-scrollbar{display:none}
+.PItem{
+  display:flex;align-items:center;gap:0.4vw;
+  padding:0.4vw 0.5vw;border-radius:0.3vw;
+  border:0.04vw solid transparent;margin-bottom:0.12vw;
+}
+.PItem.sel{
+  background:rgba(61,127,255,0.1);
+  border-color:rgba(61,127,255,0.35);
+}
+.PItem.sel.jailed{
+  background:rgba(255,60,60,0.1);
+  border-color:rgba(255,60,60,0.35);
+}
+.Av{
+  width:1.6vw;height:1.6vw;border-radius:50%;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-weight:700;font-size:0.58vw;
+}
+.av0{background:linear-gradient(135deg,#3d7fff,#7c3aed)}
+.av1{background:linear-gradient(135deg,#e03b3b,#f97316)}
+.av2{background:linear-gradient(135deg,#27ae60,#3d7fff)}
+.av3{background:linear-gradient(135deg,#f97316,#eab308)}
+.av4{background:linear-gradient(135deg,#7c3aed,#ec4899)}
+.PName{font-size:0.55vw;font-weight:500;color:#e8e8e8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.PId{font-size:0.45vw;color:#3a3a3a;margin-top:0.04vw}
+.JTag{
+  font-size:0.4vw;font-weight:700;letter-spacing:0.04vw;
+  color:#e03b3b;background:rgba(255,60,60,0.12);
+  border:0.03vw solid rgba(255,60,60,0.3);
+  border-radius:0.15vw;padding:0.04vw 0.18vw;flex-shrink:0;
+}
+.Hint{
+  padding:0.6vw;font-size:0.46vw;color:#3a3a3a;
+  border-top:0.04vw solid rgba(255,255,255,0.04);
+  text-align:center;line-height:1.9;
+}
+
+/* RIGHT */
+.JRight{flex:1;display:flex;flex-direction:column;background:#0d1018}
+
+.PhaseBar{
+  display:flex;align-items:center;gap:0.3vw;
+  padding:0.4vw 0.6vw;
+  font-size:0.48vw;font-weight:700;letter-spacing:0.08vw;
+  color:#4a4a4a;text-transform:uppercase;
+  border-bottom:0.04vw solid rgba(255,255,255,0.04);
+  background:rgba(0,0,0,0.25);
+}
+.PhaseBar i{font-size:0.46vw;color:#e03b3b}
+
+/* selected */
+.SelCard{
+  padding:0.6vw 0.7vw;min-height:2.8vw;
+  display:flex;align-items:center;gap:0.5vw;
+  border-bottom:0.04vw solid rgba(255,255,255,0.04);
+  background:rgba(0,0,0,0.15);
+}
+.SelAv{
+  width:1.9vw;height:1.9vw;border-radius:50%;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-size:0.72vw;font-weight:700;
+}
+.SelName{font-size:0.68vw;font-weight:600;color:#fff}
+.SelId{font-size:0.5vw;color:#3a3a3a;margin-top:0.06vw}
+.SelEmpty{font-size:0.56vw;color:#3a3a3a;width:100%;text-align:center}
+
+/* reasons */
+.Reasons{
+  padding:0.4vw 0.5vw;
+  border-bottom:0.04vw solid rgba(255,255,255,0.04);
+  overflow-y:auto;max-height:11vw;scrollbar-width:none;
+}
+.Reasons::-webkit-scrollbar{display:none}
+.SecLabel{
+  font-size:0.45vw;font-weight:700;letter-spacing:0.1vw;
+  color:#3a3a3a;text-transform:uppercase;margin-bottom:0.3vw;
+}
+.RGrid{display:grid;grid-template-columns:1fr 1fr;gap:0.18vw}
+.RBtn{
+  background:rgba(0,0,0,0.3);
+  border:0.04vw solid rgba(255,255,255,0.05);
+  border-radius:0.3vw;padding:0.32vw 0.4vw;
+}
+.RBtn.sel{
+  background:rgba(255,255,255,0.06);
+  border-color:rgba(255,255,255,0.2);
+}
+.RT{font-size:0.52vw;font-weight:500;color:#e8e8e8;line-height:1.3}
+.RD{font-size:0.44vw;color:#3a3a3a;margin-top:0.06vw}
+
+/* duration */
+.DurRow{
+  padding:0.35vw 0.6vw;
+  display:flex;align-items:center;gap:0.5vw;
+  border-bottom:0.04vw solid rgba(255,255,255,0.04);
+}
+.DurNum{
+  font-family:'Cormorant Garamond',serif;
+  font-size:1vw;font-weight:700;color:#fff;min-width:1.5vw;
+}
+.DurSub{font-size:0.46vw;color:#3a3a3a}
+
+/* actions */
+.Actions{padding:0.4vw 0.5vw;display:flex;flex-direction:column;gap:0.18vw}
+.ABtn{
+  width:100%;padding:0.42vw;border:none;border-radius:0.3vw;
+  font-size:0.58vw;font-weight:600;letter-spacing:0.04vw;
+  cursor:default;position:relative;overflow:hidden;
+  font-family:'Inter',sans-serif;color:#fff;
+}
+.ABtn::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(180deg,rgba(255,255,255,0.07),transparent);
+}
+.ABtn:disabled{opacity:0.2}
+.BtnJ{background:linear-gradient(135deg,#b52a2a,#7a1c1c)}
+.BtnJ.hi{box-shadow:0 0 0.6vw rgba(255,60,60,0.4)}
+.BtnU{background:linear-gradient(135deg,#1a5e35,#124826)}
+.BtnU.hi{box-shadow:0 0 0.5vw rgba(50,200,100,0.3)}
+
+/* FOOTER */
+.JFooter{
+  width:26vw;height:1.5vw;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 0.8vw;
+  background:#050505;
+  border:0.05vw solid rgba(255,255,255,0.18);
+  border-top:0.04vw solid rgba(255,255,255,0.06);
+  border-radius:0 0 0.5vw 0.5vw;
+}
+.FBuild{
+  font-family:'Cormorant Garamond',serif;
+  font-size:0.62vw;font-weight:600;letter-spacing:0.04vw;color:#fff;
+}
+.FHint{font-size:0.46vw;color:#3a3a3a;letter-spacing:0.02vw}
+
+/* NOTIFICATIONS */
+.NWrap{
+  position:fixed;bottom:0.8vw;right:0.8vw;
+  display:flex;flex-direction:column;gap:0.4vw;
+  z-index:9999;pointer-events:none;
+}
+.Notif{
+  width:16vw;padding:0.6vw 0.8vw;
+  display:flex;align-items:center;gap:0.5vw;
+  background:linear-gradient(180deg,#0a0a0a,#050505);
+  border:0.05vw solid rgba(255,255,255,0.18);
+  border-radius:0.3vw;
+  opacity:0;transform:translateX(110%);
+  transition:opacity .3s,transform .5s cubic-bezier(.19,1,.22,1);
+  position:relative;overflow:hidden;
+}
+.Notif.in{opacity:1;transform:translateX(0)}
+.Notif.out{opacity:0;transform:translateX(30%)}
+.Notif i{font-size:0.9vw;flex-shrink:0}
+.NC{display:flex;flex-direction:column;gap:0.08vw;flex:1}
+.NT{font-family:'Cormorant Garamond',serif;font-size:0.75vw;font-weight:700;letter-spacing:0.04vw}
+.ND{font-size:0.52vw;color:#a0a0a0;line-height:1.35}
+.NBar{
+  position:absolute;left:0;bottom:0;
+  height:0.1vw;width:100%;
+  animation:nprog linear forwards;
+}
+@keyframes nprog{from{width:100%}to{width:0}}
+::-webkit-scrollbar{width:0;height:0}
+</style>
+</head>
+<body>
+<div id="root">
+
+  <div class="JPanel" id="panel">
+
+    <div class="JBanner">
+      <div class="brand">
+        <div class="title">🔒 Admin Jail</div>
+        <div class="sub">Management Panel</div>
+      </div>
+      <div class="stats">
+        <div class="olabel">ONLINE</div>
+        <div class="ocount" id="cnt">0</div>
+      </div>
+      <div class="redline"></div>
+    </div>
+
+    <div class="JBody">
+
+      <div class="ColPlayers">
+        <div class="ColTitle">اللاعبون</div>
+        <div class="PListInner" id="plist"></div>
+        <div class="Hint">
+          ↑ ↓ تنقل<br>
+          Enter اختيار<br>
+          Backspace رجوع<br>
+          ESC إغلاق
+        </div>
+      </div>
+
+      <div class="JRight">
+
+        <div class="PhaseBar" id="phaseBar">
+          <i class="fa-solid fa-circle-dot"></i>
+          <span id="phaseText">اختيار اللاعب</span>
+        </div>
+
+        <div class="SelCard" id="selCard">
+          <span class="SelEmpty">← اختر لاعباً</span>
+        </div>
+
+        <div class="Reasons">
+          <div class="SecLabel">سبب السجن</div>
+          <div class="RGrid" id="rgrid"></div>
+        </div>
+
+        <div class="DurRow">
+          <div class="SecLabel">المدة</div>
+          <div class="DurNum" id="durNum">—</div>
+          <div class="DurSub">دقيقة</div>
+        </div>
+
+        <div class="Actions">
+          <button class="ABtn BtnJ" id="btnJ" disabled>
+            <i class="fa-solid fa-lock"></i>&nbsp; سجن اللاعب
+          </button>
+          <button class="ABtn BtnU" id="btnU" disabled>
+            <i class="fa-solid fa-lock-open"></i>&nbsp; إلغاء السجن
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="JFooter">
+      <span class="FBuild">discord.gg/RWL2</span>
+      <span class="FHint">↑↓ تنقل │ Enter اختيار │ ESC إغلاق</span>
+    </div>
+
+  </div>
+
+  <div class="NWrap" id="nwrap"></div>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function av(id){return 'av'+(id%5)}
+
+var panel = document.getElementById('panel');
+
+function renderPlayers(list,cur,jailed){
+  jailed=jailed||[];
+  var c=document.getElementById('plist');
+  document.getElementById('cnt').textContent=list.length;
+  if(!list.length){
+    c.innerHTML='<div style="font-size:0.5vw;color:#3a3a3a;text-align:center;padding:0.8vw">لا يوجد لاعبون</div>';
+    return;
+  }
+  c.innerHTML=list.map(function(p,i){
+    var isJ=jailed.indexOf(p.id)!==-1;
+    var sel=(i+1===cur);
+    return '<div class="PItem'+(sel?' sel':'')+(isJ?' jailed':'')+'">'+
+      '<div class="Av '+av(p.id)+'">'+esc(p.name[0]||'?').toUpperCase()+'</div>'+
+      '<div style="flex:1;min-width:0">'+
+        '<div class="PName">'+esc(p.name)+'</div>'+
+        '<div class="PId">ID: '+p.id+'</div>'+
+      '</div>'+
+      (isJ?'<div class="JTag">JAILED</div>':'')+
+    '</div>';
+  }).join('');
+  var els=c.querySelectorAll('.PItem');
+  if(els[cur-1]) els[cur-1].scrollIntoView({block:'nearest'});
+}
+
+function renderReasons(list,cur){
+  document.getElementById('rgrid').innerHTML=list.map(function(r,i){
+    return '<div class="RBtn'+(i+1===cur?' sel':'')+'">'+
+      '<div class="RT">'+esc(r.reason)+'</div>'+
+      '<div class="RD">'+r.dur+' دقيقة</div>'+
+    '</div>';
+  }).join('');
+}
+
+function renderSel(p){
+  var el=document.getElementById('selCard');
+  if(!p){el.innerHTML='<span class="SelEmpty">← اختر لاعباً</span>';return;}
+  el.innerHTML=
+    '<div class="SelAv '+av(p.id)+'">'+esc(p.name[0]||'?').toUpperCase()+'</div>'+
+    '<div><div class="SelName">'+esc(p.name)+'</div>'+
+    '<div class="SelId">ID: '+p.id+'</div></div>';
+}
+
+function setPhase(icon,text){
+  document.getElementById('phaseBar').innerHTML=
+    '<i class="fa-solid '+icon+'"></i><span>'+text+'</span>';
+}
+
+function notify(type,title,desc,dur){
+  dur=dur||4000;
+  var w=document.getElementById('nwrap');
+  var n=document.createElement('div');
+  n.className='Notif';
+  var ic=type==='ok'?'fa-circle-check':type==='err'?'fa-circle-xmark':'fa-circle-info';
+  var col=type==='ok'?'#4ade80':type==='err'?'#ff4455':'#fff';
+  n.innerHTML='<i class="fa-solid '+ic+'" style="color:'+col+'"></i>'+
+    '<div class="NC">'+
+      '<div class="NT" style="color:'+col+'">'+esc(title)+'</div>'+
+      (desc?'<div class="ND">'+esc(desc)+'</div>':'')+
+    '</div>'+
+    '<div class="NBar" style="background:'+col+';animation-duration:'+dur+'ms"></div>';
+  w.appendChild(n);
+  requestAnimationFrame(function(){requestAnimationFrame(function(){n.classList.add('in')})});
+  setTimeout(function(){
+    n.classList.remove('in');n.classList.add('out');
+    setTimeout(function(){n.remove()},600);
+  },dur);
+}
+
+window.addEventListener('message',function(e){
+  var d=e.data;
+  if(!d||!d.type) return;
+
+  if(d.type==='show'){
+    panel.classList.add('show');
+    return;
+  }
+  if(d.type==='close'){
+    panel.classList.remove('show');
+    return;
+  }
+  if(d.type==='notify'){
+    notify(d.ntype||'info',d.title||'',d.desc||'',d.dur||4000);
+    return;
+  }
+
+  if(d.type!=='state') return;
+
+  panel.classList.add('show');
+
+  var bj=document.getElementById('btnJ');
+  var bu=document.getElementById('btnU');
+  var dn=document.getElementById('durNum');
+
+  renderSel(d.selP||null);
+
+  if(d.phase==='players'){
+    setPhase('fa-users','اختيار اللاعب');
+    renderPlayers(d.players||[],d.cursor,d.jailed||[]);
+    renderReasons(d.reasons||[],0);
+    dn.textContent='—';
+    bj.disabled=true; bj.className='ABtn BtnJ'; bj.innerHTML='<i class="fa-solid fa-lock"></i>&nbsp; سجن اللاعب';
+    bu.disabled=true; bu.className='ABtn BtnU'; bu.innerHTML='<i class="fa-solid fa-lock-open"></i>&nbsp; إلغاء السجن';
+  }
+  else if(d.phase==='reasons'){
+    setPhase('fa-list','اختيار السبب');
+    renderPlayers(d.players||[],0,d.jailed||[]);
+    renderReasons(d.reasons||[],d.cursor);
+    dn.textContent='—';
+    bj.disabled=true; bj.className='ABtn BtnJ';
+    bu.disabled=true; bu.className='ABtn BtnU';
+  }
+  else if(d.phase==='confirm-jail'){
+    setPhase('fa-lock','تأكيد السجن');
+    renderPlayers(d.players||[],0,d.jailed||[]);
+    renderReasons(d.reasons||[],0);
+    dn.textContent=d.durVal||'—';
+    bj.disabled=false;
+    bj.className='ABtn BtnJ'+(d.cursor===1?' hi':'');
+    bj.innerHTML=d.cursor===1
+      ?'<i class="fa-solid fa-lock"></i>&nbsp; ✅ تأكيد السجن — Enter'
+      :'<i class="fa-solid fa-lock"></i>&nbsp; سجن اللاعب';
+    bu.disabled=true; bu.className='ABtn BtnU';
+  }
+  else if(d.phase==='confirm-unjail'){
+    setPhase('fa-lock-open','تأكيد إلغاء السجن');
+    renderPlayers(d.players||[],0,d.jailed||[]);
+    renderReasons(d.reasons||[],0);
+    dn.textContent='—';
+    bj.disabled=true; bj.className='ABtn BtnJ';
+    bu.disabled=false;
+    bu.className='ABtn BtnU'+(d.cursor===1?' hi':'');
+    bu.innerHTML=d.cursor===1
+      ?'<i class="fa-solid fa-lock-open"></i>&nbsp; ✅ تأكيد إلغاء السجن — Enter'
+      :'<i class="fa-solid fa-lock-open"></i>&nbsp; إلغاء السجن';
+  }
+});
+
+})();
+</script>
+</body>
+</html>
