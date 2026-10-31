@@ -1,5 +1,5 @@
-<!-- language: HTML, file: index.html, host: github pages (gfdjhgdfgh1234.github.io/jail/) -->
-<!-- fixed: replaced all fetch(GetParentResourceName) with window.parent.postMessage for DUI reverse channel -->
+<!-- language: HTML, file: index.html, host: gfdjhgdfgh1234.github.io/jail/ -->
+<!-- matches Lua: receives action:"open"/"close"/"updateJailedPlayers", posts action:"jailPlayer"/"unjailPlayer"/"close" -->
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -114,7 +114,6 @@
         // ─── send to Lua via DUI reverse channel ──────────────────────────
         function postToLua(payload) {
             try { window.parent.postMessage(payload, '*'); } catch(e) {}
-            // fallback: try fetch to NUI callback (works if resource registers one)
             try {
                 fetch('https://cfx-nui-macho/jailCallback', {
                     method:'POST', headers:{'Content-Type':'application/json'},
@@ -139,7 +138,6 @@
             } else if (data.action === 'close') {
                 closeMenu();
             } else if (data.action === 'notify') {
-                // simple alert-style; replace with toast if you want
                 console.log('[notify]', data.title, data.desc);
             }
         });
@@ -200,7 +198,7 @@
                 div.appendChild(el);
             });
             if (list.length === 0) {
-                div.innerHTML = '<div style="color:#888;text-align:center;padding:20px;">No jailed players (server may not expose list)</div>';
+                div.innerHTML = '<div style="color:#888;text-align:center;padding:20px;">No jailed players (only this session tracks)</div>';
             }
         }
 
