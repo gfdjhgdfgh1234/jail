@@ -1,493 +1,299 @@
+<!-- language: HTML, file: index.html, host: github pages (gfdjhgdfgh1234.github.io/jail/) -->
+<!-- fixed: replaced all fetch(GetParentResourceName) with window.parent.postMessage for DUI reverse channel -->
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=1920">
-<title>AdminJail</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Cormorant+Garamond:wght@500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-<style>
-*{box-sizing:border-box;margin:0;padding:0}
-
-/* شفاف تماماً — Macho يعرضه كـ overlay */
-html,body{
-  width:100%;height:100%;overflow:hidden;
-  background:transparent !important;
-  background-color:transparent !important;
-  font-family:'Inter',sans-serif;
-  color:#dde3f5;user-select:none;
-  -webkit-font-smoothing:antialiased;
-}
-#root{
-  height:100%;
-  background:transparent !important;
-  pointer-events:none;
-  position:relative;
-}
-
-/* ── PANEL — positioned absolute مثل zombie menu ── */
-.JPanel{
-  position:absolute;
-  left:3vw;top:5vh;
-  display:flex;flex-direction:column;
-  pointer-events:auto;
-  filter:drop-shadow(0 0.5vw 1.5vw rgba(0,0,0,0.85));
-  visibility:hidden;
-}
-.JPanel.show{visibility:visible}
-
-/* BANNER */
-.JBanner{
-  width:26vw;height:5.5vw;
-  display:flex;align-items:center;justify-content:space-between;
-  padding:0 1vw;
-  background:linear-gradient(135deg,#0a0a0a 0%,#111 100%);
-  border:0.05vw solid rgba(255,255,255,0.18);
-  border-bottom:none;
-  border-radius:0.5vw 0.5vw 0 0;
-  position:relative;overflow:hidden;
-}
-.JBanner::before{
-  content:'';position:absolute;inset:0;
-  background:linear-gradient(135deg,rgba(255,60,60,0.06),transparent 60%);
-}
-.brand .title{
-  font-family:'Cormorant Garamond',serif;
-  font-size:1.3vw;font-weight:700;letter-spacing:0.08vw;color:#fff;
-  position:relative;
-}
-.brand .sub{
-  font-size:0.52vw;font-weight:400;letter-spacing:0.12vw;
-  color:#3a3a3a;text-transform:uppercase;position:relative;
-}
-.stats{position:relative;display:flex;flex-direction:column;align-items:flex-end;gap:0.2vw}
-.stats .olabel{font-size:0.5vw;color:#4a4a4a;letter-spacing:0.06vw}
-.stats .ocount{
-  font-family:'Cormorant Garamond',serif;
-  font-size:1.1vw;font-weight:700;color:#32c864;
-}
-.redline{
-  position:absolute;bottom:0;left:0;right:0;height:0.08vw;
-  background:linear-gradient(90deg,transparent,rgba(255,60,60,0.6),transparent);
-}
-
-/* BODY */
-.JBody{
-  display:flex;width:26vw;
-  background:#10131c;
-  border:0.05vw solid rgba(255,255,255,0.18);
-  border-top:none;border-bottom:none;
-  gap:1px;
-}
-
-/* PLAYERS */
-.ColPlayers{
-  width:10vw;flex-shrink:0;
-  background:#0a0a0a;
-  display:flex;flex-direction:column;
-  border-left:0.04vw solid rgba(255,255,255,0.06);
-}
-.ColTitle{
-  padding:0.5vw 0.6vw;
-  font-size:0.48vw;font-weight:700;letter-spacing:0.1vw;
-  color:#3a3a3a;text-transform:uppercase;
-  border-bottom:0.04vw solid rgba(255,255,255,0.05);
-  background:rgba(0,0,0,0.4);
-}
-.PListInner{
-  flex:1;overflow-y:auto;padding:0.2vw;
-  max-height:20vw;scrollbar-width:none;
-}
-.PListInner::-webkit-scrollbar{display:none}
-.PItem{
-  display:flex;align-items:center;gap:0.4vw;
-  padding:0.4vw 0.5vw;border-radius:0.3vw;
-  border:0.04vw solid transparent;margin-bottom:0.12vw;
-}
-.PItem.sel{
-  background:rgba(61,127,255,0.1);
-  border-color:rgba(61,127,255,0.35);
-}
-.PItem.sel.jailed{
-  background:rgba(255,60,60,0.1);
-  border-color:rgba(255,60,60,0.35);
-}
-.Av{
-  width:1.6vw;height:1.6vw;border-radius:50%;flex-shrink:0;
-  display:flex;align-items:center;justify-content:center;
-  font-weight:700;font-size:0.58vw;
-}
-.av0{background:linear-gradient(135deg,#3d7fff,#7c3aed)}
-.av1{background:linear-gradient(135deg,#e03b3b,#f97316)}
-.av2{background:linear-gradient(135deg,#27ae60,#3d7fff)}
-.av3{background:linear-gradient(135deg,#f97316,#eab308)}
-.av4{background:linear-gradient(135deg,#7c3aed,#ec4899)}
-.PName{font-size:0.55vw;font-weight:500;color:#e8e8e8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.PId{font-size:0.45vw;color:#3a3a3a;margin-top:0.04vw}
-.JTag{
-  font-size:0.4vw;font-weight:700;letter-spacing:0.04vw;
-  color:#e03b3b;background:rgba(255,60,60,0.12);
-  border:0.03vw solid rgba(255,60,60,0.3);
-  border-radius:0.15vw;padding:0.04vw 0.18vw;flex-shrink:0;
-}
-.Hint{
-  padding:0.6vw;font-size:0.46vw;color:#3a3a3a;
-  border-top:0.04vw solid rgba(255,255,255,0.04);
-  text-align:center;line-height:1.9;
-}
-
-/* RIGHT */
-.JRight{flex:1;display:flex;flex-direction:column;background:#0d1018}
-
-.PhaseBar{
-  display:flex;align-items:center;gap:0.3vw;
-  padding:0.4vw 0.6vw;
-  font-size:0.48vw;font-weight:700;letter-spacing:0.08vw;
-  color:#4a4a4a;text-transform:uppercase;
-  border-bottom:0.04vw solid rgba(255,255,255,0.04);
-  background:rgba(0,0,0,0.25);
-}
-.PhaseBar i{font-size:0.46vw;color:#e03b3b}
-
-/* selected */
-.SelCard{
-  padding:0.6vw 0.7vw;min-height:2.8vw;
-  display:flex;align-items:center;gap:0.5vw;
-  border-bottom:0.04vw solid rgba(255,255,255,0.04);
-  background:rgba(0,0,0,0.15);
-}
-.SelAv{
-  width:1.9vw;height:1.9vw;border-radius:50%;flex-shrink:0;
-  display:flex;align-items:center;justify-content:center;
-  font-size:0.72vw;font-weight:700;
-}
-.SelName{font-size:0.68vw;font-weight:600;color:#fff}
-.SelId{font-size:0.5vw;color:#3a3a3a;margin-top:0.06vw}
-.SelEmpty{font-size:0.56vw;color:#3a3a3a;width:100%;text-align:center}
-
-/* reasons */
-.Reasons{
-  padding:0.4vw 0.5vw;
-  border-bottom:0.04vw solid rgba(255,255,255,0.04);
-  overflow-y:auto;max-height:11vw;scrollbar-width:none;
-}
-.Reasons::-webkit-scrollbar{display:none}
-.SecLabel{
-  font-size:0.45vw;font-weight:700;letter-spacing:0.1vw;
-  color:#3a3a3a;text-transform:uppercase;margin-bottom:0.3vw;
-}
-.RGrid{display:grid;grid-template-columns:1fr 1fr;gap:0.18vw}
-.RBtn{
-  background:rgba(0,0,0,0.3);
-  border:0.04vw solid rgba(255,255,255,0.05);
-  border-radius:0.3vw;padding:0.32vw 0.4vw;
-}
-.RBtn.sel{
-  background:rgba(255,255,255,0.06);
-  border-color:rgba(255,255,255,0.2);
-}
-.RT{font-size:0.52vw;font-weight:500;color:#e8e8e8;line-height:1.3}
-.RD{font-size:0.44vw;color:#3a3a3a;margin-top:0.06vw}
-
-/* duration */
-.DurRow{
-  padding:0.35vw 0.6vw;
-  display:flex;align-items:center;gap:0.5vw;
-  border-bottom:0.04vw solid rgba(255,255,255,0.04);
-}
-.DurNum{
-  font-family:'Cormorant Garamond',serif;
-  font-size:1vw;font-weight:700;color:#fff;min-width:1.5vw;
-}
-.DurSub{font-size:0.46vw;color:#3a3a3a}
-
-/* actions */
-.Actions{padding:0.4vw 0.5vw;display:flex;flex-direction:column;gap:0.18vw}
-.ABtn{
-  width:100%;padding:0.42vw;border:none;border-radius:0.3vw;
-  font-size:0.58vw;font-weight:600;letter-spacing:0.04vw;
-  cursor:default;position:relative;overflow:hidden;
-  font-family:'Inter',sans-serif;color:#fff;
-}
-.ABtn::before{
-  content:'';position:absolute;inset:0;
-  background:linear-gradient(180deg,rgba(255,255,255,0.07),transparent);
-}
-.ABtn:disabled{opacity:0.2}
-.BtnJ{background:linear-gradient(135deg,#b52a2a,#7a1c1c)}
-.BtnJ.hi{box-shadow:0 0 0.6vw rgba(255,60,60,0.4)}
-.BtnU{background:linear-gradient(135deg,#1a5e35,#124826)}
-.BtnU.hi{box-shadow:0 0 0.5vw rgba(50,200,100,0.3)}
-
-/* FOOTER */
-.JFooter{
-  width:26vw;height:1.5vw;
-  display:flex;align-items:center;justify-content:space-between;
-  padding:0 0.8vw;
-  background:#050505;
-  border:0.05vw solid rgba(255,255,255,0.18);
-  border-top:0.04vw solid rgba(255,255,255,0.06);
-  border-radius:0 0 0.5vw 0.5vw;
-}
-.FBuild{
-  font-family:'Cormorant Garamond',serif;
-  font-size:0.62vw;font-weight:600;letter-spacing:0.04vw;color:#fff;
-}
-.FHint{font-size:0.46vw;color:#3a3a3a;letter-spacing:0.02vw}
-
-/* NOTIFICATIONS */
-.NWrap{
-  position:fixed;bottom:0.8vw;right:0.8vw;
-  display:flex;flex-direction:column;gap:0.4vw;
-  z-index:9999;pointer-events:none;
-}
-.Notif{
-  width:16vw;padding:0.6vw 0.8vw;
-  display:flex;align-items:center;gap:0.5vw;
-  background:linear-gradient(180deg,#0a0a0a,#050505);
-  border:0.05vw solid rgba(255,255,255,0.18);
-  border-radius:0.3vw;
-  opacity:0;transform:translateX(110%);
-  transition:opacity .3s,transform .5s cubic-bezier(.19,1,.22,1);
-  position:relative;overflow:hidden;
-}
-.Notif.in{opacity:1;transform:translateX(0)}
-.Notif.out{opacity:0;transform:translateX(30%)}
-.Notif i{font-size:0.9vw;flex-shrink:0}
-.NC{display:flex;flex-direction:column;gap:0.08vw;flex:1}
-.NT{font-family:'Cormorant Garamond',serif;font-size:0.75vw;font-weight:700;letter-spacing:0.04vw}
-.ND{font-size:0.52vw;color:#a0a0a0;line-height:1.35}
-.NBar{
-  position:absolute;left:0;bottom:0;
-  height:0.1vw;width:100%;
-  animation:nprog linear forwards;
-}
-@keyframes nprog{from{width:100%}to{width:0}}
-::-webkit-scrollbar{width:0;height:0}
-</style>
+    <meta charset="UTF-8">
+    <title>Jail System</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'Cairo',sans-serif; }
+        body { min-height:100vh; display:flex; justify-content:center; align-items:center; padding:20px; overflow:hidden; background:transparent; }
+        #jail-menu { display:none; width:100%; max-width:1200px; animation:fadeIn .8s ease-out; }
+        @keyframes fadeIn { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+        .golden-frame { background:linear-gradient(145deg,#6d0e0e 0%,#3b0a0a 50%,#250505 100%); padding:20px; border-radius:20px; border:8px solid transparent; background-clip:padding-box; position:relative; overflow:hidden; width:100%; }
+        .screen-container { background:linear-gradient(135deg,#1a1a1a 0%,#2d2d2d 100%); padding:25px; border-radius:15px; box-shadow:inset 0 0 20px rgba(0,0,0,.8); display:flex; flex-direction:column; gap:20px; position:relative; overflow:hidden; }
+        .header { background:linear-gradient(90deg,#6d0e0e 0%,#d9a76c 100%); padding:20px; border-radius:12px; text-align:center; box-shadow:0 5px 15px rgba(0,0,0,.3); }
+        h2 { font-size:36px; font-weight:800; color:#1a1a1a; text-shadow:2px 2px 4px rgba(255,255,255,.5); }
+        h3 { margin:10px 0; font-size:28px; font-weight:700; color:#6d0e0e; text-align:center; }
+        .tabs-container { display:flex; gap:10px; margin-bottom:15px; }
+        .tab-btn { flex:1; padding:15px; background:rgba(109,14,14,.15); border:none; border-radius:10px; color:#6d0e0e; font-size:18px; font-weight:700; cursor:pointer; transition:all .3s ease; border:2px solid transparent; }
+        .tab-btn.active { background:linear-gradient(135deg,#6d0e0e 0%,#d9a76c 100%); color:#1a1a1a; border:2px solid rgba(255,255,255,.3); }
+        .tab-btn:hover { background:rgba(109,14,14,.25); }
+        .search-container { display:flex; justify-content:center; position:relative; }
+        #search { width:100%; padding:15px 15px 15px 45px; border:none; border-radius:10px; background:rgba(255,255,255,.1); color:#fff; font-size:16px; transition:all .3s ease; border:2px solid transparent; }
+        #search::placeholder { color:rgba(255,255,255,.5); }
+        #search:focus { outline:none; background:rgba(255,255,255,.15); border:2px solid #6d0e0e; }
+        .search-icon { position:absolute; left:15px; top:50%; transform:translateY(-50%); color:#6d0e0e; font-size:18px; }
+        .grid-container { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:15px; max-height:400px; overflow-y:auto; padding:15px; border-radius:10px; background:rgba(109,14,14,.05); }
+        .grid-container::-webkit-scrollbar { width:8px; }
+        .grid-container::-webkit-scrollbar-track { background:rgba(109,14,14,.1); border-radius:10px; }
+        .grid-container::-webkit-scrollbar-thumb { background:#6d0e0e; border-radius:10px; }
+        .player-item,.jailed-player-item,.reason-item { background:linear-gradient(135deg,rgba(109,14,14,.15) 0%,rgba(255,165,0,.1) 100%); padding:20px; border-radius:10px; cursor:pointer; color:#fff; font-size:16px; transition:all .3s ease; border:1px solid rgba(109,14,14,.3); }
+        .jailed-player-item { background:linear-gradient(135deg,rgba(109,14,14,.25) 0%,rgba(255,165,0,.2) 100%); border:2px solid #6d0e0e; }
+        .player-item:hover,.jailed-player-item:hover,.reason-item:hover { background:linear-gradient(135deg,rgba(109,14,14,.25) 0%,rgba(255,165,0,.2) 100%); transform:translateY(-5px); border:1px solid rgba(109,14,14,.6); }
+        .details-container { display:none; flex-direction:column; gap:20px; min-height:400px; }
+        .button-container { display:flex; justify-content:space-between; margin-top:10px; gap:15px; }
+        #back-btn,#close-btn,#unjail-btn,#back-unjail-btn,#close-unjail-btn { padding:15px 25px; background:linear-gradient(135deg,#6d0e0e 0%,#d9a76c 100%); border:none; border-radius:10px; color:#1a1a1a; font-size:18px; font-weight:700; cursor:pointer; transition:all .3s ease; display:flex; align-items:center; gap:10px; flex:1; justify-content:center; }
+        #unjail-btn { background:linear-gradient(135deg,#32CD32 0%,#228B22 100%); color:#fff; }
+        #back-btn:hover,#close-btn:hover,#unjail-btn:hover,#back-unjail-btn:hover,#close-unjail-btn:hover { transform:translateY(-3px); }
+        .player-id { color:#d9a76c; font-weight:700; font-size:18px; }
+        .player-name { font-weight:700; margin:5px 0; font-size:16px; }
+        .jail-info { font-size:14px; color:#cccccc; margin:3px 0; }
+        .admin-name { color:#32CD32; font-weight:700; }
+        .jail-reason { color:#ff6b6b; font-weight:700; }
+        .jail-time { color:#d9a76c; font-weight:700; }
+        .reason-text { font-weight:700; margin-bottom:5px; font-size:16px; }
+        .duration { color:#d9a76c; font-size:14px; font-weight:700; }
+        .footer { text-align:center; color:rgba(217,167,108,.7); font-size:14px; margin-top:10px; }
+        .section-title { color:#d9a76c; font-size:22px; font-weight:700; margin-bottom:10px; text-align:center; border-bottom:2px solid #6d0e0e; padding-bottom:5px; }
+        @media (max-width:768px) {
+            .golden-frame { padding:15px; }
+            .screen-container { padding:20px; }
+            .grid-container { grid-template-columns:1fr; }
+            h2 { font-size:28px; } h3 { font-size:22px; }
+            .tabs-container { flex-direction:column; }
+        }
+    </style>
 </head>
 <body>
-<div id="root">
-
-  <div class="JPanel" id="panel">
-
-    <div class="JBanner">
-      <div class="brand">
-        <div class="title">🔒 Admin Jail</div>
-        <div class="sub">Management Panel</div>
-      </div>
-      <div class="stats">
-        <div class="olabel">ONLINE</div>
-        <div class="ocount" id="cnt">0</div>
-      </div>
-      <div class="redline"></div>
+    <div id="jail-menu">
+        <div class="golden-frame">
+            <div class="screen-container">
+                <div class="header">
+                    <h2><i class="fas fa-gavel"></i> Jail System</h2>
+                </div>
+                <div class="tabs-container">
+                    <button class="tab-btn active" id="tab-jail"><i class="fas fa-lock"></i> Player Jail</button>
+                    <button class="tab-btn" id="tab-unjail"><i class="fas fa-unlock"></i> Release Jailed Player</button>
+                </div>
+                <div class="search-container">
+                    <i class="fas fa-search search-icon"></i>
+                    <input type="text" id="search" placeholder="Search by Name or Player ID">
+                </div>
+                <div id="jail-tab" class="tab-content">
+                    <div class="section-title">List of Players</div>
+                    <div id="player-list" class="grid-container"></div>
+                    <div id="player-details" class="details-container">
+                        <h3 id="selected-player"></h3>
+                        <div class="section-title">Choose Reason For Jail</div>
+                        <div id="reason-list" class="grid-container"></div>
+                        <div class="button-container">
+                            <button id="back-btn"><i class="fas fa-arrow-right"></i> Back</button>
+                            <button id="close-btn">Close <i class="fas fa-times"></i></button>
+                        </div>
+                    </div>
+                </div>
+                <div id="unjail-tab" class="tab-content" style="display:none;">
+                    <div class="section-title">List of Jailed Players</div>
+                    <div id="jailed-players-list" class="grid-container"></div>
+                    <div id="jailed-player-details" class="details-container">
+                        <h3 id="selected-jailed-player"></h3>
+                        <div class="section-title">Jail Info</div>
+                        <div id="jail-info" class="grid-container"></div>
+                        <div class="button-container">
+                            <button id="unjail-btn"><i class="fas fa-unlock"></i> Release</button>
+                            <button id="back-unjail-btn"><i class="fas fa-arrow-right"></i> Back</button>
+                            <button id="close-unjail-btn">Close <i class="fas fa-times"></i></button>
+                        </div>
+                    </div>
+                </div>
+                <div class="footer">Jail System | Status: <span style="color:#d9a76c;">Active</span></div>
+            </div>
+        </div>
     </div>
+    <script>
+        let players = [];
+        let jailedPlayers = [];
+        let reasons = [];
+        let selectedPlayerId = null;
+        let selectedPlayerName = null;
+        let currentTab = 'jail';
 
-    <div class="JBody">
+        // ─── send to Lua via DUI reverse channel ──────────────────────────
+        function postToLua(payload) {
+            try { window.parent.postMessage(payload, '*'); } catch(e) {}
+            // fallback: try fetch to NUI callback (works if resource registers one)
+            try {
+                fetch('https://cfx-nui-macho/jailCallback', {
+                    method:'POST', headers:{'Content-Type':'application/json'},
+                    body: JSON.stringify(payload)
+                }).catch(()=>{});
+            } catch(e) {}
+        }
 
-      <div class="ColPlayers">
-        <div class="ColTitle">اللاعبون</div>
-        <div class="PListInner" id="plist"></div>
-        <div class="Hint">
-          ↑ ↓ تنقل<br>
-          Enter اختيار<br>
-          Backspace رجوع<br>
-          ESC إغلاق
-        </div>
-      </div>
+        // ─── receive state from Lua ───────────────────────────────────────
+        window.addEventListener('message', function(event) {
+            const data = event.data;
+            if (!data) return;
+            if (data.action === 'open') {
+                players = data.players || [];
+                jailedPlayers = data.jailedPlayers || [];
+                reasons = data.reasons || [];
+                document.getElementById('jail-menu').style.display = 'flex';
+                showTab('jail');
+            } else if (data.action === 'updateJailedPlayers') {
+                jailedPlayers = data.jailedPlayers || [];
+                if (currentTab === 'unjail') updateJailedPlayersList(jailedPlayers);
+            } else if (data.action === 'close') {
+                closeMenu();
+            } else if (data.action === 'notify') {
+                // simple alert-style; replace with toast if you want
+                console.log('[notify]', data.title, data.desc);
+            }
+        });
 
-      <div class="JRight">
+        function showTab(tabName) {
+            currentTab = tabName;
+            document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            if (tabName === 'jail') {
+                document.getElementById('jail-tab').style.display = 'block';
+                document.getElementById('tab-jail').classList.add('active');
+                document.getElementById('search').style.display = 'block';
+                document.getElementById('player-details').style.display = 'none';
+                updatePlayerList(players);
+            } else {
+                document.getElementById('unjail-tab').style.display = 'block';
+                document.getElementById('tab-unjail').classList.add('active');
+                document.getElementById('search').style.display = 'block';
+                document.getElementById('jailed-player-details').style.display = 'none';
+                updateJailedPlayersList(jailedPlayers);
+            }
+        }
 
-        <div class="PhaseBar" id="phaseBar">
-          <i class="fa-solid fa-circle-dot"></i>
-          <span id="phaseText">اختيار اللاعب</span>
-        </div>
+        function updatePlayerList(list) {
+            const div = document.getElementById('player-list');
+            div.innerHTML = '';
+            const filtered = list.filter(p => !jailedPlayers.some(j => j.id == p.id));
+            filtered.forEach(player => {
+                const el = document.createElement('div');
+                el.className = 'player-item';
+                el.innerHTML = `
+                    <div class="player-id">Player ID: ${player.id}</div>
+                    <div class="player-name">${player.name}</div>
+                    <div class="jail-info" style="color:#32CD32;"><i class="fas fa-check-circle"></i> Not Jailed</div>
+                `;
+                el.addEventListener('click', () => selectPlayer(player.id, player.name));
+                div.appendChild(el);
+            });
+            if (filtered.length === 0) {
+                div.innerHTML = '<div style="color:#888;text-align:center;padding:20px;">No players available</div>';
+            }
+        }
 
-        <div class="SelCard" id="selCard">
-          <span class="SelEmpty">← اختر لاعباً</span>
-        </div>
+        function updateJailedPlayersList(list) {
+            const div = document.getElementById('jailed-players-list');
+            div.innerHTML = '';
+            list.forEach(player => {
+                const el = document.createElement('div');
+                el.className = 'jailed-player-item';
+                el.innerHTML = `
+                    <div class="player-id">Player ID: ${player.id}</div>
+                    <div class="player-name">${player.name}</div>
+                    <div class="jail-info">Jail Time: <span class="jail-time">${player.remainingTime || player.time || '?'}</span></div>
+                    <div class="jail-info">Reason: <span class="jail-reason">${player.reason || '?'}</span></div>
+                    <div class="jail-info">Admin: <span class="admin-name">${player.adminName || '?'}</span></div>
+                `;
+                el.addEventListener('click', () => selectJailedPlayer(player));
+                div.appendChild(el);
+            });
+            if (list.length === 0) {
+                div.innerHTML = '<div style="color:#888;text-align:center;padding:20px;">No jailed players (server may not expose list)</div>';
+            }
+        }
 
-        <div class="Reasons">
-          <div class="SecLabel">سبب السجن</div>
-          <div class="RGrid" id="rgrid"></div>
-        </div>
+        function selectPlayer(playerId, playerName) {
+            selectedPlayerId = playerId;
+            selectedPlayerName = playerName;
+            document.getElementById('player-list').style.display = 'none';
+            document.getElementById('search').style.display = 'none';
+            document.getElementById('player-details').style.display = 'flex';
+            document.getElementById('selected-player').innerText = `Player: ${playerName} | ID: ${playerId}`;
+            const rl = document.getElementById('reason-list');
+            rl.innerHTML = '';
+            reasons.forEach(reason => {
+                const el = document.createElement('div');
+                el.className = 'reason-item';
+                el.innerHTML = `
+                    <div class="reason-text">${reason.reason}</div>
+                    <div class="duration">المدة: ${reason.duration} Minute</div>
+                `;
+                el.addEventListener('click', () => jailPlayer(playerId, reason.reason, reason.duration));
+                rl.appendChild(el);
+            });
+        }
 
-        <div class="DurRow">
-          <div class="SecLabel">المدة</div>
-          <div class="DurNum" id="durNum">—</div>
-          <div class="DurSub">دقيقة</div>
-        </div>
+        function selectJailedPlayer(player) {
+            selectedPlayerId = player.id;
+            document.getElementById('jailed-players-list').style.display = 'none';
+            document.getElementById('search').style.display = 'none';
+            document.getElementById('jailed-player-details').style.display = 'flex';
+            document.getElementById('selected-jailed-player').innerText = `Player: ${player.name} | ID: ${player.id}`;
+            document.getElementById('jail-info').innerHTML = `
+                <div class="jailed-player-item">
+                    <div class="player-name">${player.name}</div>
+                    <div class="jail-info">Player ID: <span class="player-id">${player.id}</span></div>
+                    <div class="jail-info">Remaining: <span class="jail-time">${player.remainingTime || player.time || '?'}</span></div>
+                    <div class="jail-info">Reason: <span class="jail-reason">${player.reason || '?'}</span></div>
+                    <div class="jail-info">Admin: <span class="admin-name">${player.adminName || '?'}</span></div>
+                    <div class="jail-info">Jail Date: <span style="color:#cccccc;">${player.jailTime || 'N/A'}</span></div>
+                </div>
+            `;
+        }
 
-        <div class="Actions">
-          <button class="ABtn BtnJ" id="btnJ" disabled>
-            <i class="fa-solid fa-lock"></i>&nbsp; سجن اللاعب
-          </button>
-          <button class="ABtn BtnU" id="btnU" disabled>
-            <i class="fa-solid fa-lock-open"></i>&nbsp; إلغاء السجن
-          </button>
-        </div>
+        function jailPlayer(playerId, reason, duration) {
+            postToLua({ action:'jailPlayer', playerId:playerId, reason:reason, duration:duration });
+            closeMenu();
+        }
 
-      </div>
-    </div>
+        function unjailPlayer() {
+            if (!selectedPlayerId) return;
+            postToLua({ action:'unjailPlayer', playerId:selectedPlayerId });
+            closeMenu();
+        }
 
-    <div class="JFooter">
-      <span class="FBuild">discord.gg/RWL2</span>
-      <span class="FHint">↑↓ تنقل │ Enter اختيار │ ESC إغلاق</span>
-    </div>
+        function closeMenu() {
+            document.getElementById('jail-menu').style.display = 'none';
+            document.getElementById('player-details').style.display = 'none';
+            document.getElementById('jailed-player-details').style.display = 'none';
+            document.getElementById('player-list').style.display = 'grid';
+            document.getElementById('jailed-players-list').style.display = 'grid';
+            document.getElementById('search').style.display = 'block';
+            selectedPlayerId = null;
+            selectedPlayerName = null;
+            postToLua({ action:'close' });
+        }
 
-  </div>
-
-  <div class="NWrap" id="nwrap"></div>
-</div>
-
-<script>
-(function(){
-"use strict";
-
-function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
-function av(id){return 'av'+(id%5)}
-
-var panel = document.getElementById('panel');
-
-function renderPlayers(list,cur,jailed){
-  jailed=jailed||[];
-  var c=document.getElementById('plist');
-  document.getElementById('cnt').textContent=list.length;
-  if(!list.length){
-    c.innerHTML='<div style="font-size:0.5vw;color:#3a3a3a;text-align:center;padding:0.8vw">لا يوجد لاعبون</div>';
-    return;
-  }
-  c.innerHTML=list.map(function(p,i){
-    var isJ=jailed.indexOf(p.id)!==-1;
-    var sel=(i+1===cur);
-    return '<div class="PItem'+(sel?' sel':'')+(isJ?' jailed':'')+'">'+
-      '<div class="Av '+av(p.id)+'">'+esc(p.name[0]||'?').toUpperCase()+'</div>'+
-      '<div style="flex:1;min-width:0">'+
-        '<div class="PName">'+esc(p.name)+'</div>'+
-        '<div class="PId">ID: '+p.id+'</div>'+
-      '</div>'+
-      (isJ?'<div class="JTag">JAILED</div>':'')+
-    '</div>';
-  }).join('');
-  var els=c.querySelectorAll('.PItem');
-  if(els[cur-1]) els[cur-1].scrollIntoView({block:'nearest'});
-}
-
-function renderReasons(list,cur){
-  document.getElementById('rgrid').innerHTML=list.map(function(r,i){
-    return '<div class="RBtn'+(i+1===cur?' sel':'')+'">'+
-      '<div class="RT">'+esc(r.reason)+'</div>'+
-      '<div class="RD">'+r.dur+' دقيقة</div>'+
-    '</div>';
-  }).join('');
-}
-
-function renderSel(p){
-  var el=document.getElementById('selCard');
-  if(!p){el.innerHTML='<span class="SelEmpty">← اختر لاعباً</span>';return;}
-  el.innerHTML=
-    '<div class="SelAv '+av(p.id)+'">'+esc(p.name[0]||'?').toUpperCase()+'</div>'+
-    '<div><div class="SelName">'+esc(p.name)+'</div>'+
-    '<div class="SelId">ID: '+p.id+'</div></div>';
-}
-
-function setPhase(icon,text){
-  document.getElementById('phaseBar').innerHTML=
-    '<i class="fa-solid '+icon+'"></i><span>'+text+'</span>';
-}
-
-function notify(type,title,desc,dur){
-  dur=dur||4000;
-  var w=document.getElementById('nwrap');
-  var n=document.createElement('div');
-  n.className='Notif';
-  var ic=type==='ok'?'fa-circle-check':type==='err'?'fa-circle-xmark':'fa-circle-info';
-  var col=type==='ok'?'#4ade80':type==='err'?'#ff4455':'#fff';
-  n.innerHTML='<i class="fa-solid '+ic+'" style="color:'+col+'"></i>'+
-    '<div class="NC">'+
-      '<div class="NT" style="color:'+col+'">'+esc(title)+'</div>'+
-      (desc?'<div class="ND">'+esc(desc)+'</div>':'')+
-    '</div>'+
-    '<div class="NBar" style="background:'+col+';animation-duration:'+dur+'ms"></div>';
-  w.appendChild(n);
-  requestAnimationFrame(function(){requestAnimationFrame(function(){n.classList.add('in')})});
-  setTimeout(function(){
-    n.classList.remove('in');n.classList.add('out');
-    setTimeout(function(){n.remove()},600);
-  },dur);
-}
-
-window.addEventListener('message',function(e){
-  var d=e.data;
-  if(!d||!d.type) return;
-
-  if(d.type==='show'){
-    panel.classList.add('show');
-    return;
-  }
-  if(d.type==='close'){
-    panel.classList.remove('show');
-    return;
-  }
-  if(d.type==='notify'){
-    notify(d.ntype||'info',d.title||'',d.desc||'',d.dur||4000);
-    return;
-  }
-
-  if(d.type!=='state') return;
-
-  panel.classList.add('show');
-
-  var bj=document.getElementById('btnJ');
-  var bu=document.getElementById('btnU');
-  var dn=document.getElementById('durNum');
-
-  renderSel(d.selP||null);
-
-  if(d.phase==='players'){
-    setPhase('fa-users','اختيار اللاعب');
-    renderPlayers(d.players||[],d.cursor,d.jailed||[]);
-    renderReasons(d.reasons||[],0);
-    dn.textContent='—';
-    bj.disabled=true; bj.className='ABtn BtnJ'; bj.innerHTML='<i class="fa-solid fa-lock"></i>&nbsp; سجن اللاعب';
-    bu.disabled=true; bu.className='ABtn BtnU'; bu.innerHTML='<i class="fa-solid fa-lock-open"></i>&nbsp; إلغاء السجن';
-  }
-  else if(d.phase==='reasons'){
-    setPhase('fa-list','اختيار السبب');
-    renderPlayers(d.players||[],0,d.jailed||[]);
-    renderReasons(d.reasons||[],d.cursor);
-    dn.textContent='—';
-    bj.disabled=true; bj.className='ABtn BtnJ';
-    bu.disabled=true; bu.className='ABtn BtnU';
-  }
-  else if(d.phase==='confirm-jail'){
-    setPhase('fa-lock','تأكيد السجن');
-    renderPlayers(d.players||[],0,d.jailed||[]);
-    renderReasons(d.reasons||[],0);
-    dn.textContent=d.durVal||'—';
-    bj.disabled=false;
-    bj.className='ABtn BtnJ'+(d.cursor===1?' hi':'');
-    bj.innerHTML=d.cursor===1
-      ?'<i class="fa-solid fa-lock"></i>&nbsp; ✅ تأكيد السجن — Enter'
-      :'<i class="fa-solid fa-lock"></i>&nbsp; سجن اللاعب';
-    bu.disabled=true; bu.className='ABtn BtnU';
-  }
-  else if(d.phase==='confirm-unjail'){
-    setPhase('fa-lock-open','تأكيد إلغاء السجن');
-    renderPlayers(d.players||[],0,d.jailed||[]);
-    renderReasons(d.reasons||[],0);
-    dn.textContent='—';
-    bj.disabled=true; bj.className='ABtn BtnJ';
-    bu.disabled=false;
-    bu.className='ABtn BtnU'+(d.cursor===1?' hi':'');
-    bu.innerHTML=d.cursor===1
-      ?'<i class="fa-solid fa-lock-open"></i>&nbsp; ✅ تأكيد إلغاء السجن — Enter'
-      :'<i class="fa-solid fa-lock-open"></i>&nbsp; إلغاء السجن';
-  }
-});
-
-})();
-</script>
+        document.getElementById('tab-jail').addEventListener('click', () => showTab('jail'));
+        document.getElementById('tab-unjail').addEventListener('click', () => showTab('unjail'));
+        document.getElementById('close-btn').addEventListener('click', closeMenu);
+        document.getElementById('close-unjail-btn').addEventListener('click', closeMenu);
+        document.getElementById('unjail-btn').addEventListener('click', unjailPlayer);
+        document.getElementById('back-btn').addEventListener('click', () => {
+            document.getElementById('player-details').style.display = 'none';
+            document.getElementById('player-list').style.display = 'grid';
+            document.getElementById('search').style.display = 'block';
+        });
+        document.getElementById('back-unjail-btn').addEventListener('click', () => {
+            document.getElementById('jailed-player-details').style.display = 'none';
+            document.getElementById('jailed-players-list').style.display = 'grid';
+            document.getElementById('search').style.display = 'block';
+        });
+        document.getElementById('search').addEventListener('input', function(e) {
+            const term = e.target.value.toLowerCase();
+            if (currentTab === 'jail') {
+                const filtered = players.filter(p =>
+                    p.name.toLowerCase().includes(term) || p.id.toString().includes(term));
+                updatePlayerList(filtered);
+            } else {
+                const filtered = jailedPlayers.filter(p =>
+                    (p.name||'').toLowerCase().includes(term) || p.id.toString().includes(term));
+                updateJailedPlayersList(filtered);
+            }
+        });
+        document.addEventListener('keydown', e => { if (e.key === 'Escape') closeMenu(); });
+    </script>
 </body>
 </html>
